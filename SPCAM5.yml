@@ -1,0 +1,2 @@
+inputs: [TBP, QBP, PS, SOLIN, SHFLX, LHFLX]
+outputs: [PTTEND, PTEQ, FSNT, FSNS, FLNT, FLNS, PRECT]
