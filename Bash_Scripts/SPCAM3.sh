@@ -1,0 +1,5 @@
+python3 /fast/gmooers/preprocess_aqua_SPCAM3.py --config_file /fast/gmooers/SPCAM3.yml --in_dir /DFS-L/DATA/pritchard/gmooers/Workflow/SPCAM_DATA/SPCAM3/fluxbypass_aqua/ --aqua_names AndKua_aqua_SPCAM3.0_sp_fbp_f4.cam2.h1.0001-0[123456]* --out_dir /fast/gmooers/Preprocessed_Data/SPCAM3_6_Months/ --out_pref full_physics_essentials_train_month01
+
+python3 /fast/gmooers/preprocess_aqua_SPCAM3.py --config_file /fast/gmooers/SPCAM3.yml --in_dir /DFS-L/DATA/pritchard/gmooers/Workflow/SPCAM_DATA/SPCAM3/fluxbypass_aqua/ --aqua_names AndKua_aqua_SPCAM3.0_sp_fbp_f4.cam2.h1.0001-07* --out_dir /fast/gmooers/Preprocessed_Data/SPCAM3_6_Months/ --out_pref full_physics_essentials_valid_month02 --ext_norm /fast/gmooers/Preprocessed_Data/SPCAM3_6_Months/full_physics_essentials_train_month01_norm.nc
+
+python3 /fast/gmooers/shuffle_ds.py --method fast --pref /fast/gmooers/Preprocessed_Data/SPCAM3_6_Months/full_physics_essentials_train_month01 --chunk_size 10000000
