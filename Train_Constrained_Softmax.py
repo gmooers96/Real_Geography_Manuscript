@@ -1,5 +1,7 @@
 # Import the required cbrain functions
 #from cbrain.imports import *
+import os 
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
 from imports import *
 from data_generator import *
 from models import *
@@ -13,7 +15,7 @@ t0 = time.time()
 # Otherwise tensorflow will use ALL your GPU RAM for no reason
 limit_mem()
 
-DATADIR = '/fast/gmooers/Preprocessed_Data/7_Years_Spaced/'
+DATADIR = 'Preprocessed_Data/7_Years_Spaced/'
 
 train_gen = DataGenerator(
     data_dir=DATADIR, 
@@ -65,6 +67,7 @@ valid_after = True
 #Input layer
 #Should be 64
 inp = Input(shape=(train_gen.feature_shape,))
+
 #hidden layers
 #create an initial hidden layer
 x = Dense(hidden_layers[0], kernel_regularizer=reg)(inp)
@@ -74,8 +77,18 @@ for i in range(len(hidden_layers)-1):
     x = Dense(hidden_layers[i], kernel_regularizer=reg)(x)
     x = act_layer(activation)(x)
 
-#precip only predict
-x = Dense(train_gen.target_shape, activation='relu', kernel_regularizer=reg)(x)
+#Utilize Functional API?
+branchA = Dense(64, kernel_regularizer=reg)(x)
+branchA = act_layer(activation)(branchA)
+
+#standard relu case
+#https://keras.io/api/layers/activations/
+activation = 'softmax'
+branchB = Dense(1, kernel_regularizer=reg)(x)
+branchB = act_layer(activation)(branchB)
+
+x= concatenate([branchA, branchB])
+print('New Model')
 print('New Model')
 
 
@@ -104,12 +117,12 @@ mcp_save = ModelCheckpoint('.mdl_wts.h5', save_best_only=True, monitor='val_loss
 print('train_gen_n_batches: ', train_gen.n_batches)
 print('valid_gen_n_batches', valid_gen.n_batches)
 
-callbacks = [keras.callbacks.TensorBoard(log_dir='my_log_dir/9_Years', histogram_freq=0), earlyStopping, mcp_save]
+callbacks = [keras.callbacks.TensorBoard(log_dir='my_log_dir/Softmax', histogram_freq=0), earlyStopping, mcp_save]
 
 h = model.fit_generator(
     train_gen.return_generator(False, False),   # This actually returns the generator
     train_gen.n_batches,
-    epochs=20, #actually should be 18
+    epochs=24, 
     validation_data=valid_gen.return_generator(False, False),
     validation_steps=valid_gen.n_batches, workers =16, max_queue_size =50, callbacks=callbacks
 )
@@ -120,13 +133,13 @@ from keras.utils import plot_model
 import pydot
 from keras.utils.vis_utils import model_to_dot
 keras.utils.vis_utils.pydot = pydot
-plot_model(model, to_file='my_log_dir/9_years/model.png')
-plot_model(model, show_shapes=True, to_file='my_log_dir/9_years/models.png')
+plot_model(model, to_file='my_log_dir/Softmax/model.png')
+plot_model(model, show_shapes=True, to_file='my_log_dir/Softmax/models.png')
 
 
 
 #Save the model
-model.save('Models/9_years.h5')  # creates a HDF5 file 'my_model.h5'
+model.save('Models/Softmax.h5')  # creates a HDF5 file 'my_model.h5'
 del model  # deletes the existing model
 print('It Finished')
 
@@ -149,28 +162,4 @@ plt.xlabel('Epochs', fontsize = 20)
 plt.ylabel('Loss', fontsize = 20)
 #plt.yscale('log')
 plt.legend()
-plt.savefig('Figures/9_Years.png')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+plt.savefig('Figures/Softmax.png')

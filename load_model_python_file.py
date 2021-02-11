@@ -1,4 +1,4 @@
-# mport the required cbrain functions
+# Import the required cbrain functions
 from imports import *
 from data_generator import *
 from models import *
@@ -28,7 +28,7 @@ print('Starting')
 limit_mem()
 
 
-DATADIR = 'Preprocessed_Data/Summer_2021_From_Annual/'
+DATADIR = '/DFS-L/DATA/pritchard/gmooers/RG_Paper/RG_DATA/Preprocessed_Data/One_Month_July/'
 
 
 
@@ -51,9 +51,9 @@ tsub = valid_gen.target_norms[0]
 tdiv = valid_gen.target_norms[1]
 
 
-model = keras.models.load_model('Models/Annual_Sigmoid.h5')
+model = keras.models.load_model('/fast/gmooers/Models/ContinentModels/second_round_model.h5')
 
-path_to_file = 'Preprocessed_Data/Summer_2021_From_Annual/full_physics_essentials_valid_month02_features.nc'
+path_to_file = '/DFS-L/DATA/pritchard/gmooers/RG_Paper/RG_DATA/Preprocessed_Data/One_Month_July/full_physics_essentials_valid_month02_features.nc'
 real_ds = xr.open_dataset(path_to_file)
 features = real_ds.features[:, :].values
 print(features.shape)
@@ -104,7 +104,7 @@ sample = np.arange(len(model_data))
 myda = xr.DataArray(model_data, coords = {'sample': sample, 'lev': lev}, dims=('sample', 'lev'))
 myda.name = 'Prediction'
 myds = myda.to_dataset()
-myds.to_netcdf('Models/Annual_Sigmoid_Summer.nc')
+#myds.to_netcdf('Models/9_yeears.nc')
 
 
 t1 = time.time()

@@ -1,4 +1,4 @@
-# mport the required cbrain functions
+# Import the required cbrain functions
 from imports import *
 from data_generator import *
 from models import *
@@ -21,6 +21,11 @@ t0 = time.time()
 
 output_vector = 65
 input_vector = 64
+#Attempt to deal with dead kernel
+#config = tf.ConfigProto()
+#config.gpu_options.allow_growth = True   # Allocates as much memory as needed.
+#keras.backend.tensorflow_backend.set_session(tf.Session(config=config))
+#sess = tf.Session(config=config)
 print('Starting')
 
 
@@ -28,7 +33,7 @@ print('Starting')
 limit_mem()
 
 
-DATADIR = 'Preprocessed_Data/Summer_2021_From_Annual/'
+DATADIR = 'Preprocessed_Data/Paper_Annual/'
 
 
 
@@ -50,17 +55,35 @@ fdiv = valid_gen.feature_norms[1]
 tsub = valid_gen.target_norms[0]
 tdiv = valid_gen.target_norms[1]
 
+def custom_activation(z):
+    #y = x**10*K
+    #y = K.exp(z)
+    y = z**10
+    return y
 
-model = keras.models.load_model('Models/Annual_Sigmoid.h5')
+#load the trained model
+#with custom activation
+#model = keras.models.load_model('Models/Summer_Months_10x.h5', custom_objects = {"custom_activation": custom_activation})
 
-path_to_file = 'Preprocessed_Data/Summer_2021_From_Annual/full_physics_essentials_valid_month02_features.nc'
+#normal
+model = keras.models.load_model('Models/Sigmoid.h5')
+
+#Jordan
+#model = tf.keras.models.load_model('Models/ContinentModels/second_round_model.h5')
+#nc file
+#model = keras.models.load_model('Models/Very_Small_Sherpa.h5')
+#dataset = netCDF4.Dataset("Preprocessed_Data/Better_1_Year_Valid/full_physics_essentials_small_valid_month02_features.nc")
+#features = np.array(dataset.variables['features'])
+
+path_to_file = 'Preprocessed_Data/Paper_Annual/full_physics_essentials_valid_month02_features.nc'
 real_ds = xr.open_dataset(path_to_file)
 features = real_ds.features[:, :].values
+#features = real_ds.features[:, :]
 print(features.shape)
 
 print('files imported')
-model_data = np.zeros(shape=(len(features), output_vector))
-model_data[:,:] = np.nan
+model_data = np.zeros(shape=(len(features)))
+model_data[:] = np.nan
 
 segments = int(len(features)/100000)
 steps = segments+1
@@ -73,24 +96,28 @@ for i in range(steps):
         feature_here=features[start:gap]
         f = feature_here-fsub
         f = f/fdiv
+        #f = f.values
         f=f.reshape(-1,1)
         x = np.reshape(f, (100000,64))
         p = model.predict_on_batch(x)
         p = p/tdiv
+        #s = np.reshape(p, (65,100000))
         p = p+tsub
-        model_data[start:gap,:] = p 
+        model_data[start:gap] = np.squeeze(p[:,-1])  
         start = start+100000
         gap = gap+ 100000
     else:
         feature_here=features[start:]
         f = feature_here-fsub
         f = f/fdiv
+        #f = f.values
         f=f.reshape(-1,1)
         x = np.reshape(f, (len(features[start:]),64))
         p = model.predict_on_batch(x)
+        #s = np.reshape(p, (65,100000))
         p = p/tdiv
         p = p+tsub
-        model_data[start:,:] = p 
+        model_data[start:] = np.squeeze(p[:,-1]) 
 
 print('made it')
 
@@ -98,13 +125,14 @@ print('made it')
 
 print('creating nc file')
 
-lev = np.arange(len(model_data[0]))
+#lev = np.arange(len(model_data[0]))
 sample = np.arange(len(model_data))
 
-myda = xr.DataArray(model_data, coords = {'sample': sample, 'lev': lev}, dims=('sample', 'lev'))
+myda = xr.DataArray(model_data, coords = {'sample': sample}, dims=('sample'))
 myda.name = 'Prediction'
 myds = myda.to_dataset()
-myds.to_netcdf('Models/Annual_Sigmoid_Summer.nc')
+myds.to_netcdf('Models/Annual_Sigmoid.nc')
+#myds.to_netcdf('Models/Paper_Full_2018_Primative.nc')
 
 
 t1 = time.time()

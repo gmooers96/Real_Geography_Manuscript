@@ -51,16 +51,15 @@ tsub = valid_gen.target_norms[0]
 tdiv = valid_gen.target_norms[1]
 
 
-model = keras.models.load_model('Models/Annual_Sigmoid.h5')
+model = keras.models.load_model('Models/Annual_Exponential.h5')
 
 path_to_file = 'Preprocessed_Data/Summer_2021_From_Annual/full_physics_essentials_valid_month02_features.nc'
 real_ds = xr.open_dataset(path_to_file)
-features = real_ds.features[:, :].values
+features = real_ds.features[:, :]
 print(features.shape)
 
 print('files imported')
-model_data = np.zeros(shape=(len(features), output_vector))
-model_data[:,:] = np.nan
+model_data = np.empty(shape=(len(features), output_vector))
 
 segments = int(len(features)/100000)
 steps = segments+1
@@ -70,7 +69,7 @@ gap = 100000
 for i in range(steps):
     if i <= steps-2:
         print(i)
-        feature_here=features[start:gap]
+        feature_here=features[start:gap].values
         f = feature_here-fsub
         f = f/fdiv
         f=f.reshape(-1,1)
@@ -82,11 +81,11 @@ for i in range(steps):
         start = start+100000
         gap = gap+ 100000
     else:
-        feature_here=features[start:]
+        feature_here=features[start:].values
         f = feature_here-fsub
         f = f/fdiv
         f=f.reshape(-1,1)
-        x = np.reshape(f, (len(features[start:]),64))
+        x = np.reshape(f, (len(features[start:].values),64))
         p = model.predict_on_batch(x)
         p = p/tdiv
         p = p+tsub
@@ -104,7 +103,7 @@ sample = np.arange(len(model_data))
 myda = xr.DataArray(model_data, coords = {'sample': sample, 'lev': lev}, dims=('sample', 'lev'))
 myda.name = 'Prediction'
 myds = myda.to_dataset()
-myds.to_netcdf('Models/Annual_Sigmoid_Summer.nc')
+myds.to_netcdf('Models/Annual_Exponential_Summer.nc')
 
 
 t1 = time.time()
